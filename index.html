@@ -1,11 +1,141 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+
+<html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Do you like me?</title>
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--accent:#ff4897;--muted:#9aa4b2}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Noto Sans',sans-serif;background:linear-gradient(135deg,#071021 0%, #0f172a 60%);color:#e6eef6}.wrap{min-height:100%;display:grid;place-items:center;padding:32px}
+.card{width:min(520px,94vw);background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:18px;padding:36px;box-shadow:0 10px 30px rgba(2,6,23,0.6);position:relative;overflow:hidden}
+
+h1{margin:0 0 12px;font-size:28px;letter-spacing:0.2px}
+p{margin:0 0 22px;color:var(--muted)}
+
+.btn-row{display:flex;gap:18px;align-items:center}
+.btn{padding:12px 18px;border-radius:12px;border:0;cursor:pointer;font-weight:600;font-size:16px}
+.yes{background:linear-gradient(90deg,#ff8ab3,#ff5a8f);color:white}
+.no{background:transparent;color:#d7e0ea;border:2px solid rgba(255,255,255,0.06);position:relative}
+
+/* container for the moving NO button so we can position it */
+.btn-area{height:90px;position:relative}
+.no{position:absolute;left:calc(50% + 80px);transform:translate(-50%,0);transition:transform 220ms cubic-bezier(.2,.9,.25,1)}
+
+/* cute message */
+.message{margin-top:20px;padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.02));display:none;align-items:center;gap:12px}
+.heart{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;font-size:20px}
+
+/* small confetti */
+.confetti{position:absolute;inset:0;pointer-events:none}
+.confetti span{position:absolute;width:8px;height:8px;border-radius:2px;opacity:0;animation:fall 1200ms forwards}
+@keyframes fall{0%{transform:translateY(-10px) scale(0.6);opacity:1}100%{transform:translateY(120px) scale(1);opacity:0}}
+
+@media (max-width:480px){h1{font-size:22px}.btn-row{gap:12px}.btn{font-size:15px}}
+
+  </style>
 </head>
 <body>
-    
-</body>
+  <div class="wrap">
+    <div class="card" role="main">
+      <h1>Do you like me?</h1>
+      <p id="sub">Simple sa sawaal. Batao kya tumhe pasand hoon?</p><div class="btn-area" id="btnArea">
+    <div class="btn-row">
+      <button class="btn yes" id="yesBtn">Yes 🥰</button>
+      <button class="btn no" id="noBtn">No 😅</button>
+    </div>
+  </div>
+
+  <div class="message" id="cuteMsg" aria-live="polite">
+    <div class="heart">💖</div>
+    <div>
+      <strong>Aww, thank you! 🥺</strong>
+      <div style="font-size:13px;color:var(--muted)">Tumhare haan ne mera din bana diya.</div>
+    </div>
+  </div>
+
+  <div class="confetti" id="confetti"></div>
+</div>
+
+  </div>  <script>
+    const noBtn = document.getElementById('noBtn');
+    const yesBtn = document.getElementById('yesBtn');
+    const btnArea = document.getElementById('btnArea');
+    const cuteMsg = document.getElementById('cuteMsg');
+    const confetti = document.getElementById('confetti');
+
+    // Utility: random number in range
+    const rand = (min,max)=> Math.floor(Math.random()*(max-min+1))+min;
+
+    // Move the NO button to a new position inside btnArea
+    function moveNo() {
+      const areaRect = btnArea.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
+      const maxX = Math.max(0, areaRect.width - btnRect.width - 8);
+      const maxY = Math.max(0, areaRect.height - btnRect.height - 8);
+
+      const x = rand(0, Math.floor(maxX));
+      const y = rand(0, Math.floor(maxY));
+
+      // Use translate to position relative to its normal spot
+      noBtn.style.transform = `translate(${x - (areaRect.width/2 - btnRect.width/2)}px, ${y}px)`;
+    }
+
+    // Prevent easy clicking: if user tries to click rapidly, move it away
+    noBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      moveNo();
+    });
+
+    // also move when hovering on larger screens
+    noBtn.addEventListener('mouseenter', ()=>{
+      // small chance to NOT move so it's sometimes clickable
+      if (window.innerWidth > 420) {
+        if (Math.random() > 0.15) moveNo();
+      }
+    });
+
+    // YES button shows cute message + confetti
+    yesBtn.addEventListener('click', ()=>{
+      cuteMsg.style.display = 'flex';
+      yesBtn.disabled = true;
+
+      // generate confetti pieces
+      confetti.innerHTML = '';
+      const colors = ['#ff5a8f','#ffd166','#7ce7b5','#8ec5ff','#b98cff'];
+      for(let i=0;i<18;i++){
+        const el = document.createElement('span');
+        el.style.left = (50 + rand(-120,120)) + 'px';
+        el.style.top = rand(8,40) + 'px';
+        el.style.background = colors[rand(0,colors.length-1)];
+        el.style.transform = `rotate(${rand(-45,45)}deg)`;
+        el.style.animationDelay = (i*30)+'ms';
+        confetti.appendChild(el);
+      }
+
+      // update subtitle
+      document.getElementById('sub').textContent = 'Yay! Tu ne haan bola — main khush hoon 🥺';
+
+      // gentle pulse on heart
+      const heart = document.querySelector('.heart');
+      heart.animate([
+        { transform: 'scale(1)' },
+        { transform: 'scale(1.18)' },
+        { transform: 'scale(1)' }
+      ],{duration:800,iterations:3});
+    });
+
+    // For keyboard accessibility: if user focuses and presses Enter on NO, move it
+    noBtn.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); moveNo(); }
+    });
+
+    // Initial small wiggle to hint at interaction
+    setTimeout(()=>{
+      noBtn.style.transform += ' translateY(0)';
+      noBtn.animate([{transform:'translateY(0)'},{transform:'translateY(-6px)'},{transform:'translateY(0)'}],{duration:900,iterations:1});
+    },600);
+  </script></body>
 </html>
